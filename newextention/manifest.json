@@ -1,0 +1,86 @@
+{
+  "manifest_version": 3,
+  "name": "Focus roc'h",
+  "short_name": "Focus roc'h",
+  "version": "1.0.0",
+  "default_locale": "en",
+  "description": "__MSG_extensionDescription__",
+  "author": "aku-dev",
+  "homepage_url": "https://github.com/aku-dev-mp4/focus-roch",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "focus-roch@aku-dev-mp4",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
+  },
+  "permissions": [
+    "storage",
+    "alarms",
+    "clipboardWrite"
+  ],
+  "icons": {
+    "32": "icons/moai_32.png",
+    "48": "icons/moai_48.png",
+    "64": "icons/moai_64.png",
+    "96": "icons/moai_96.png",
+    "128": "icons/moai_128.png"
+  },
+  "background": {
+    "scripts": [
+      "shared/settings.js",
+      "shared/protection.js",
+      "background.js"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "shared/settings.js",
+        "content/transcript.js",
+        "content/audio-mode.js",
+        "content/youtube.js"
+      ],
+      "css": [
+        "content/youtube.css"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://www.youtube.com/live_chat*",
+        "https://www.youtube.com/live_chat_replay*"
+      ],
+      "all_frames": true,
+      "js": [
+        "shared/settings.js",
+        "content/live-chat.js"
+      ],
+      "css": [
+        "content/live-chat.css"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_icon": {
+      "16": "icons/moai_16.png",
+      "32": "icons/moai_32.png"
+    },
+    "default_title": "__MSG_actionTitleNormal__"
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  }
+}

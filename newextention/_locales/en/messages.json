@@ -1,0 +1,11 @@
+{
+  "extensionDescription": {
+    "message": "Hide YouTube's distractions (home feed, recommendations, end screens, comments) and use YouTube on purpose."
+  },
+  "actionTitleNormal": {
+    "message": "Focus roc'h — open settings"
+  },
+  "actionTitleHardcore": {
+    "message": "Focus roc'h — settings: about:addons → Focus roc'h → Options"
+  }
+}

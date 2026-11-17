@@ -1,0 +1,309 @@
+/*
+ * content/youtube.css
+ *
+ * Every hiding rule of the extension, in one stylesheet.
+ *
+ * How it works: manifest.json injects this file into YouTube at
+ * `document_start`, before the page draws anything. It does nothing on its
+ * own, because each rule only matches when content/youtube.js has put the
+ * matching `data-dfyt-*` attribute on <html>. Turning an option on or off is
+ * therefore a single attribute change; the browser restyles the page by
+ * itself, including elements YouTube adds later while you scroll or navigate.
+ *
+ * Fix: the old version injected/removed ~15 <link> files at runtime. They
+ * loaded asynchronously (so hidden things flashed first), needed
+ * web_accessible_resources, and were visible to the page's own scripts. A
+ * manifest stylesheet is applied synchronously and is invisible to the page.
+ *
+ * Removed on purpose: the old rules hiding YouTube's ad containers (#player-ads,
+ * .ytp-ad-overlay-container...). Ad-blocker detection looks at exactly those
+ * elements, which is what made YouTube refuse to play videos. Also removed:
+ * the 2017-layout player sizing (#watch7-*, .watch-stage-mode), which
+ * matches nothing on today's YouTube.
+ *
+ * Selectors use element names and link targets (href) rather than positions
+ * like :nth-child(2): positions change whenever YouTube adds an entry, and
+ * text would only work in English. `:has()` needs Firefox 121+.
+ *
+ * Performance note: :has() makes Firefox re-check a rule whenever something
+ * changes inside the element it is attached to. That's fine for menu entries
+ * (tiny, rarely change), which is the only place it's used now. Avoid it on
+ * big, busy areas like the sidebar or the comments (see the v2.0.3 fix below).
+ */
+
+/* --- Anti-flash ---------------------------------------------------------
+   Reading the settings takes a few milliseconds after document_start. Until
+   youtube.js sets data-dfyt-ready, keep the home feed invisible, so that with
+   "Hide Feed" on you never see it appear for a moment.
+   (Replaces the old prehide_feed.css, which the background injected into
+   every tab of every site, several times per page load.) */
+html:not([data-dfyt-ready]) ytd-browse[page-subtype="home"] {
+  visibility: hidden !important;
+}
+
+/* --- Home ---------------------------------------------------------------- */
+
+html[data-dfyt-hide-feed] ytd-browse[page-subtype="home"] {
+  display: none !important;
+}
+
+/* Setting `hideRecommended`. The "Recommended" shelf it used to hide no longer
+   exists; today the distracting rows are the Shorts and topic shelves mixed
+   into the home grid, which are all ytd-rich-section-renderer elements. */
+html[data-dfyt-hide-home-shelves] ytd-browse[page-subtype="home"] ytd-rich-section-renderer {
+  display: none !important;
+}
+
+/* The topic chips bar ("All, Gaming, News, Podcasts...") on Home, hidden with
+   either setting above.
+   Fix (v2.0.1): it wasn't hidden. With YouTube's "frosted glass" top bar the
+   chips bar is not reliably inside ytd-browse, so instead of guessing its
+   parent we let youtube.js mark the Home page with data-dfyt-home (other
+   pages, like search, keep their chips). The frosted-glass band behind the top
+   bar is sized for "top bar + chips"; shrink it back to the top bar alone, or
+   an empty translucent strip would remain. */
+html[data-dfyt-home][data-dfyt-hide-feed] ytd-feed-filter-chip-bar-renderer,
+html[data-dfyt-home][data-dfyt-hide-home-shelves] ytd-feed-filter-chip-bar-renderer {
+  display: none !important;
+}
+html[data-dfyt-home][data-dfyt-hide-feed] #frosted-glass.with-chipbar,
+html[data-dfyt-home][data-dfyt-hide-home-shelves] #frosted-glass.with-chipbar {
+  height: var(--ytd-masthead-height, 56px) !important;
+}
+
+/* --- Top bar and left menu (the "guide") -------------------------------- */
+
+/* The old selector used :nth-child(4), which broke when YouTube reordered the
+   top bar buttons. Both element names are listed because YouTube has used
+   both; one that doesn't exist simply matches nothing. */
+html[data-dfyt-hide-bell] ytd-notification-topbar-button-renderer,
+html[data-dfyt-hide-bell] ytd-notification-topbar-button-shape-renderer {
+  display: none !important;
+}
+
+/* Setting `hideSubBar`. Fix: the drawer is now tp-yt-app-drawer (the old
+   app-drawer#guide matched nothing). Also, YouTube shifts the page right to
+   make room for the menu; without resetting that margin, an empty strip
+   would remain on the left. */
+html[data-dfyt-hide-guide] tp-yt-app-drawer#guide,
+html[data-dfyt-hide-guide] ytd-mini-guide-renderer {
+  display: none !important;
+}
+html[data-dfyt-hide-guide] ytd-page-manager {
+  margin-left: 0 !important;
+}
+
+/* Setting `hideTrending`. Fix: the old rule hid "the 2nd menu entry", which is
+   now Shorts. YouTube has also replaced Trending with Explore, so both link
+   targets are matched. */
+html[data-dfyt-hide-trending] ytd-guide-entry-renderer:has(a[href^="/feed/trending"], a[href^="/feed/explore"]),
+html[data-dfyt-hide-trending] ytd-mini-guide-entry-renderer:has(a[href^="/feed/trending"], a[href^="/feed/explore"]) {
+  display: none !important;
+}
+
+/* Setting `hideNonLists` ("Show only Library/Lists"). Keeps the first menu
+   section (Home, Subscriptions) and the section with your library (history,
+   playlists); hides the rest (channel list, Explore, More from YouTube) and
+   the footer. Fix: the old rule hid "every section but the first", which
+   also hid the library itself on today's layout. */
+html[data-dfyt-only-lists] ytd-guide-section-renderer:not(:first-child):not(:has(a[href^="/feed/you"], a[href^="/feed/history"], a[href^="/feed/library"], a[href^="/playlist"])),
+html[data-dfyt-only-lists] ytd-guide-renderer #footer {
+  display: none !important;
+}
+
+/* --- Watch page ---------------------------------------------------------- */
+
+/* Setting `hideSidebar`: the related videos column. #related is also used
+   when YouTube moves that list under the video in narrow windows. */
+html[data-dfyt-hide-related-list] ytd-watch-flexy #related {
+  display: none !important;
+}
+
+/* Fix (v2.0.1): in theatre mode the player spans the whole width, and below it
+   YouTube keeps two columns: title/description (#primary) and the sidebar
+   (#secondary). With the related list hidden, #secondary is an empty column
+   that still takes its width, so the description looked squeezed to the left.
+   We remove the column when nothing visible is left in it: no playlist and no
+   chat, or only ones we hide ourselves - hence one rule per combination of
+   our settings. `playlist` and `should-stamp-chat` are attributes YouTube
+   itself puts on <ytd-watch-flexy> (checked in YouTube's code).
+   Only in theatre mode: in the default layout YouTube computes the player
+   size from the column widths, so we leave that layout alone.
+
+   Performance fix (v2.0.3): v2.0.1 used #secondary:not(:has(... :not([hidden]))).
+   With :has(), Firefox must re-check the rule whenever something changes
+   inside #secondary, and YouTube flips `hidden` attributes there all the time
+   (thumbnails, hover overlays...). That caused freezes. Attributes on
+   ytd-watch-flexy itself cost nothing to check. */
+html[data-dfyt-hide-related-list] ytd-watch-flexy[theater]:not([playlist]):not([should-stamp-chat]) #secondary,
+html[data-dfyt-hide-related-list][data-dfyt-hide-playlist] ytd-watch-flexy[theater]:not([should-stamp-chat]) #secondary,
+html[data-dfyt-hide-related-list][data-dfyt-hide-chat] ytd-watch-flexy[theater]:not([playlist]) #secondary,
+html[data-dfyt-hide-related-list][data-dfyt-hide-playlist][data-dfyt-hide-chat] ytd-watch-flexy[theater] #secondary {
+  display: none !important;
+}
+/* Centre the remaining column under the player instead of leaving it
+   stuck to the left. No effect when both columns are shown (they fill the row). */
+html[data-dfyt-hide-related-list] ytd-watch-flexy[theater] #columns {
+  justify-content: center !important;
+}
+
+/* Fix: hidePlaylist and hideLiveChat now each depend only on their own
+   setting. The old logic mixed them together (chat was only hidden when not
+   in a playlist, and the playlist panel itself was never hidden). */
+html[data-dfyt-hide-playlist] ytd-watch-flexy ytd-playlist-panel-renderer {
+  display: none !important;
+}
+html[data-dfyt-hide-chat] ytd-live-chat-frame,
+html[data-dfyt-hide-chat] ytd-watch-flexy #chat-container {
+  display: none !important;
+}
+
+/* Fix (v2.0.2), the "big black box" in theatre mode on live streams.
+   In theatre mode the player row (#full-bleed-container) is a flex row:
+   the player (flex: 1) + #panels-full-bleed-container. While the chat is
+   open, YouTube puts the attribute `live-chat-present-and-expanded` on
+   <ytd-watch-flexy>, plus one of `fixed-panels` / `panels-beside-player` /
+   `squeezeback` depending on the layout. YouTube's own CSS then gives the
+   panels area the sidebar's width - even in the `fixed-panels` layout, where
+   the chat itself is not in that area but pinned to the right edge of the
+   window. That empty, black, sidebar-wide area is the box you saw. YouTube
+   also pads the columns below the player by the same width.
+   (v2.0.1 only hid the area when it contained the chat, which is not the case
+   in the `fixed-panels` layout - found by reading a saved copy of the page.)
+
+   v2.0.3: this is now only a safety net. youtube.js collapses the chat through
+   YouTube itself (see setChatCollapsed), after which YouTube removes
+   `live-chat-present-and-expanded` and lays the page out correctly on its own,
+   so these two rules stop matching. They only matter during the moment before
+   the collapse, or if YouTube ever ignores it. */
+html[data-dfyt-hide-chat] ytd-watch-flexy[live-chat-present-and-expanded]:is([fixed-panels], [panels-beside-player], [squeezeback]) #panels-full-bleed-container {
+  display: none !important;
+}
+html[data-dfyt-hide-chat] ytd-watch-flexy[live-chat-present-and-expanded][fixed-panels] #columns {
+  padding-right: 0 !important;
+}
+
+/* Fix (v2.0.1): under the video, YouTube can show a "Live chat - Open panel"
+   card in the teaser carousel next to the description. */
+html[data-dfyt-hide-chat] ytd-watch-metadata #teaser-carousel {
+  display: none !important;
+}
+
+/* Setting `hideRelated`: the video suggestions shown on top of the player at
+   the end of a video, and the end-screen video/playlist cards.
+   Fix (v2.0.1): suggestions still appeared. Current YouTube draws them in new
+   containers (names checked against YouTube's player stylesheet, Nov 2026):
+   .html5-endscreen (the whole end screen, including the "modern" version) and
+   .ytp-fullscreen-grid (a grid of videos at the end, and below the player in
+   fullscreen). While that grid is "peeking", YouTube lifts the controls by
+   --ytp-grid-peek-height; setting it to 0 keeps the controls at the bottom. */
+html[data-dfyt-hide-endscreen] .html5-endscreen,
+html[data-dfyt-hide-endscreen] .ytp-endscreen-content,
+html[data-dfyt-hide-endscreen] .ytp-modern-endscreen-content,
+html[data-dfyt-hide-endscreen] .ytp-fullscreen-grid,
+html[data-dfyt-hide-endscreen] .ytp-fullscreen-grid-expand-button,
+html[data-dfyt-hide-endscreen] .ytp-ce-video,
+html[data-dfyt-hide-endscreen] .ytp-ce-playlist {
+  display: none !important;
+}
+html[data-dfyt-hide-endscreen] .html5-video-player {
+  --ytp-grid-peek-height: 0px !important;
+}
+
+/* Fix: the old rule used a class name; the shelf is an element.
+   v2.0.6: also the "Shop" button next to Like, which youtube.js recognises
+   by its icon and marks with data-dfyt-shop-button (see markShopButton). */
+html[data-dfyt-hide-merch] ytd-merch-shelf-renderer,
+html[data-dfyt-hide-merch] [data-dfyt-shop-button] {
+  display: none !important;
+}
+
+/* #comment-teaser: the small comments preview YouTube shows under the
+   description in some layouts (added in v2.0.1, same family as the chat card). */
+html[data-dfyt-hide-comments] ytd-watch-flexy #comments,
+html[data-dfyt-hide-comments] ytd-watch-metadata #comment-teaser {
+  display: none !important;
+}
+
+/* --- Our own transcript buttons (content/transcript.js) ------------------
+   Not gated by an attribute: these elements only exist while the option is
+   on. Colours use YouTube's own CSS variables, so the buttons follow its light
+   and dark themes; the fallbacks after the comma apply if YouTube renames them. */
+/* After Like / Dislike: same grey round look as YouTube's action buttons.
+   v2.0.8: space on both sides; with only a left margin it touched Share. */
+#dfyt-transcript-button {
+  margin: 0 8px;
+}
+/* In the transcript panel header, right after the title. YouTube's header
+   buttons (X) have no background until hovered, so this one matches them.
+   flex: none stops the header's flex layout from squashing it. */
+#dfyt-copy-transcript-button {
+  margin: 0 4px;
+  background: transparent;
+}
+.dfyt-icon-button {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  background: var(--yt-spec-badge-chip-background, rgba(128, 128, 128, 0.15));
+  color: var(--yt-spec-text-primary, currentColor);
+}
+.dfyt-icon-button:hover {
+  background: var(--yt-spec-button-chip-background-hover, rgba(128, 128, 128, 0.3));
+}
+.dfyt-icon-button:focus-visible {
+  outline: 2px solid var(--yt-spec-call-to-action, #3ea6ff);
+  outline-offset: 2px;
+}
+.dfyt-icon-button svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+  pointer-events: none;
+}
+
+/* --- Audio mode (content/audio-mode.js) ----------------------------------
+   The picture is hidden (quality is also forced to 144p to save data) and a
+   headphones icon is drawn in its place. Scoped to #movie_player, the main
+   player, so hover previews on the home page are not affected. */
+html[data-dfyt-audio-mode] #movie_player video.html5-main-video {
+  visibility: hidden !important;
+}
+html[data-dfyt-audio-mode] #movie_player::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Inline SVG (data: URI): no file to load, nothing fetched over the network. */
+  background: center / 72px no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff' fill-opacity='0.35'%3E%3Cpath d='M12 3a9 9 0 0 0-9 9v7c0 1.1.9 2 2 2h4v-8H5v-1a7 7 0 0 1 14 0v1h-4v8h4c1.1 0 2-.9 2-2v-7a9 9 0 0 0-9-9z'/%3E%3C/svg%3E");
+}
+/* Ambient mode paints a glow from the video's colours, which means reading
+   video frames continuously. Useless with no picture, so turn it off. */
+html[data-dfyt-audio-mode] #cinematics,
+html[data-dfyt-audio-mode] #cinematics-container {
+  display: none !important;
+}
+/* The button itself: centre the icon like the player's own buttons; red
+   when audio mode is on, like the subtitles button's active state. */
+#dfyt-audio-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+#dfyt-audio-button svg {
+  width: 24px;
+  height: 24px;
+  fill: #fff;
+  pointer-events: none;
+}
+#dfyt-audio-button[aria-pressed="true"] svg {
+  fill: #ff4e45;
+}

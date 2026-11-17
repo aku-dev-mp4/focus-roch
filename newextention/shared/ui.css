@@ -1,0 +1,153 @@
+/*
+ * shared/ui.css
+ *
+ * The text-mode base shared by the settings page and the popup: font,
+ * colours, inverse video and the text-styled controls. Page layouts live in
+ * options/options.css and popup/popup.css.
+ *
+ * Strict monochrome. Colour never carries meaning: emphasis is INVERSE VIDEO
+ * (a block in the text colour, text in the background colour), like a
+ * terminal. Used for the active tab, the protection status and warnings.
+ * Contrast on the background: text 21:1, gray 5.7:1 (light) / 7.4:1 (dark).
+ * --texture is decoration only (aria-hidden), deliberately faint.
+ *
+ * One font size everywhere. JetBrains Mono (bundled, SIL OFL 1.1) is used
+ * at a 1.32 line height because its block characters (█ ░ ▁ … ▇) span
+ * exactly 1.32 em: stacked bars and charts then touch with no gaps.
+ *
+ * Decorative characters generated here use `content: "x" / ""`: the part
+ * after the slash is what screen readers get (nothing). The line before,
+ * without the slash, is a fallback for browsers that don't know it.
+ *
+ * Completely static: no animation, no transition.
+ */
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../fonts/JetBrainsMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: block;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../fonts/JetBrainsMono-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: block;
+}
+
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --fg: #000000;
+  --muted: #666666;
+  --texture: #e2e2e2;
+  --size: 13px;
+  --lh: 1.32;
+  --line: calc(var(--size) * var(--lh)); /* one text line */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --fg: #ffffff;
+    --muted: #999999;
+    --texture: #1e1e1e;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  animation: none !important;
+  transition: none !important;
+}
+html { scroll-behavior: auto; }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  /* JetBrains Mono has no Chinese characters: for those the browser falls
+     back, character by character, to the CJK fonts listed after it. */
+  font: 400 var(--size) / var(--lh) "JetBrains Mono", ui-monospace, "DejaVu Sans Mono",
+    "Noto Sans Mono CJK SC", "Noto Sans CJK SC", "Source Han Sans SC", "WenQuanYi Micro Hei",
+    "PingFang SC", "Microsoft YaHei", monospace;
+}
+h1, h2, h3 { font: inherit; }
+[hidden] { display: none !important; }
+body.loading { visibility: hidden; } /* until the state is loaded: no jump */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.muted { color: var(--muted); }
+.strong { font-weight: 700; }
+
+/* Inverse video: the only emphasis there is. */
+.inv { background: var(--fg); color: var(--bg); }
+.inv-block { display: block; background: var(--fg); color: var(--bg); padding: 0 1ch; }
+.warning { display: block; background: var(--fg); color: var(--bg); padding: 0 1ch; }
+.warning::before { content: "! "; content: "! " / ""; }
+
+/* ---- controls ---------------------------------------------------------- */
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  line-height: inherit;
+}
+button { cursor: pointer; text-align: left; }
+:focus-visible { outline: 1px solid var(--fg); outline-offset: 2px; }
+
+/* [ Button ] */
+.btn::before { content: "[ "; content: "[ " / ""; white-space: pre; }
+.btn::after { content: " ]"; content: " ]" / ""; white-space: pre; }
+.btn:hover:not(:disabled) { background: var(--fg); color: var(--bg); }
+.btn.quiet { color: var(--muted); }
+.btn:disabled { color: var(--muted); cursor: not-allowed; }
+
+/* [x] checkbox / (•) radio: the real input stays (keyboard, screen readers),
+   only invisible; the box is drawn after it. */
+.check,
+.choice { position: relative; display: block; cursor: pointer; }
+.check input,
+.choice input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.check { padding-left: 4ch; text-indent: -4ch; } /* wrapped text aligns after the box */
+.check.sub { margin-left: 4ch; }
+.check .box::before { content: "[ ] "; content: "[ ] " / ""; white-space: pre; }
+.check input:checked + .box::before { content: "[x] "; content: "[x] " / ""; }
+/* Hardcore: unchecked protective box waiting for a request. */
+.check.staged .box::before { content: "[~] "; content: "[~] " / ""; }
+.check:has(input:disabled) { color: var(--muted); cursor: not-allowed; }
+.check:hover { background: var(--fg); color: var(--bg); }
+.check input:focus-visible + .box,
+.choice input:focus-visible ~ .name { outline: 1px solid var(--fg); outline-offset: 2px; }
+
+/* Collapsible: [+] closed, [-] open. */
+summary { list-style: none; cursor: pointer; color: var(--muted); }
+summary::-webkit-details-marker { display: none; }
+summary::before { content: "[+] "; content: "[+] " / ""; white-space: pre; }
+details[open] > summary::before { content: "[-] "; content: "[-] " / ""; }
+
+/* Language switch:  EN  中文  > FR */
+.langs { display: flex; flex-wrap: wrap; gap: 0 1ch; }
+.langs button { color: var(--muted); }
+.langs button::before { content: "  "; content: "  " / ""; white-space: pre; }
+.langs button[aria-pressed="true"] { color: var(--fg); font-weight: 700; }
+.langs button[aria-pressed="true"]::before { content: "> "; content: "> " / ""; }
+
+/* Lists with a light bullet. */
+.items { list-style: none; }
+.items li::before { content: "· "; content: "· " / ""; color: var(--muted); }

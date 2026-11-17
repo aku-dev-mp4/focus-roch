@@ -1,0 +1,11 @@
+{
+  "extensionDescription": {
+    "message": "隐藏 YouTube 上分散注意力的内容（首页推荐、相关视频、片尾推荐、评论），让你有目的地使用 YouTube。"
+  },
+  "actionTitleNormal": {
+    "message": "Focus roc'h — 打开设置"
+  },
+  "actionTitleHardcore": {
+    "message": "Focus roc'h — 设置：about:addons → Focus roc'h → 选项"
+  }
+}

@@ -1,0 +1,24 @@
+/*
+ * popup/popup.css
+ *
+ * Layout of the toolbar popup (base styles: shared/ui.css). Rows separated
+ * by thin rules, like the settings page's columns.
+ */
+
+/* Fix: Firefox draws the popup panel with rounded corners, which cut into
+   text placed right at the edge. A small margin all around keeps everything
+   inside the rounded area. */
+body { width: 36ch; padding: 6px 6px 4px; }
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0 1ch;
+  padding: 0 1ch;
+  border-bottom: 1px solid var(--fg);
+}
+.block { padding: var(--line) 1ch; border-bottom: 1px solid var(--fg); }
+.block:last-child { border-bottom: 0; }
+.block > p + *,
+.block > h1 + p { margin-top: var(--line); }
+.actions { display: flex; flex-wrap: wrap; gap: 0 2ch; }

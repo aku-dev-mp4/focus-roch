@@ -1,0 +1,64 @@
+/*
+ * content/live-chat.css
+ *
+ * Injected into the live chat itself. The chat is a separate page
+ * (youtube.com/live_chat) shown in an <iframe>, so youtube.css can't reach
+ * inside it: it needs its own content script (see manifest.json, all_frames).
+ *
+ * Setting `lightChat` ("Lighter live chat"). Same principle as youtube.css:
+ * nothing applies until live-chat.js puts data-dfyt-light-chat on <html>.
+ *
+ * Why the chat is heavy: it's a full app receiving a stream of messages, and
+ * each message brings an avatar image, hover menus and entry animations,
+ * plus floating reactions and a Super Chat ticker that redraw constantly.
+ * Also, every time you switch between theatre and normal mode, YouTube moves
+ * the chat's <iframe> elsewhere in the page, and browsers reload an iframe
+ * that is moved: the chat restarts from scratch and redraws everything.
+ * We can't stop that move, but we make every message, and so every reload,
+ * cheaper.
+ *
+ * Element names come from a saved copy of the chat page (Nov 2026).
+ */
+
+/* Profile photos: one image to download and decode per message. Names stay
+   visible. Removing the image also removes its reserved space. */
+html[data-dfyt-light-chat] yt-live-chat-text-message-renderer #author-photo,
+html[data-dfyt-light-chat] yt-live-chat-paid-message-renderer #author-photo,
+html[data-dfyt-light-chat] yt-live-chat-membership-item-renderer #author-photo {
+  display: none !important;
+}
+
+/* Floating reactions (hearts, emoji "fountains") and full-chat animations:
+   pure decoration, but they animate continuously on top of the messages. */
+html[data-dfyt-light-chat] yt-reaction-control-panel-overlay-view-model,
+html[data-dfyt-light-chat] yt-emoji-fountain-view-model,
+html[data-dfyt-light-chat] yt-live-chat-animation-overlay-renderer {
+  display: none !important;
+}
+
+/* The Super Chat / membership ticker above the messages: its countdown bars
+   redraw several times per second. The Super Chats themselves still appear
+   in the message list. */
+html[data-dfyt-light-chat] yt-live-chat-ticker-renderer {
+  display: none !important;
+}
+
+/* No animations or transitions anywhere in the chat: new messages appear
+   instantly instead of sliding/fading in, which saves work per message. */
+html[data-dfyt-light-chat] *,
+html[data-dfyt-light-chat] *::before,
+html[data-dfyt-light-chat] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Let the browser skip messages that are scrolled out of view.
+   `content-visibility: auto` means "don't lay out or paint this element while
+   it's off-screen". `contain-intrinsic-size: auto 32px` gives the browser a
+   placeholder height for messages it has never drawn; `auto` means once a
+   message has been drawn, its real height is remembered. That keeps the
+   scrollbar and the chat's "stay at the bottom" behaviour stable. */
+html[data-dfyt-light-chat] yt-live-chat-item-list-renderer #items > * {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 32px;
+}

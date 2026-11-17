@@ -1,0 +1,11 @@
+{
+  "extensionDescription": {
+    "message": "Masque les distractions de YouTube (fil d'accueil, recommandations, fins de vidéo, commentaires) pour l'utiliser en connaissance de cause."
+  },
+  "actionTitleNormal": {
+    "message": "Focus roc'h — ouvrir les réglages"
+  },
+  "actionTitleHardcore": {
+    "message": "Focus roc'h — réglages : about:addons → Focus roc'h → Options"
+  }
+}

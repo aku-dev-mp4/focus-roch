@@ -1,0 +1,47 @@
+<!doctype html>
+<!--
+  popup/popup.html
+
+  The toolbar popup, in NORMAL mode only (the guardian removes it in
+  hardcore mode, where the button opens nothing). Quick actions: status and
+  on/off, the four main hiding options, a link to all settings and the
+  switch to hardcore. Same text-mode style as the settings page.
+-->
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Focus roc'h</title>
+  <link rel="stylesheet" href="../shared/ui.css">
+  <link rel="stylesheet" href="popup.css">
+  <script src="../shared/settings.js" defer></script>
+  <script src="../options/i18n.js" defer></script>
+  <script src="popup.js" defer></script>
+</head>
+<body class="loading">
+  <header class="top">
+    <p class="strong">FOCUS ROC'H</p>
+    <div class="langs" role="group" data-i18n-aria="lang.label">
+      <button type="button" data-lang="en" lang="en">EN</button>
+      <button type="button" data-lang="zh" lang="zh-CN">中文</button>
+      <button type="button" data-lang="fr" lang="fr">FR</button>
+    </div>
+  </header>
+
+  <section class="block">
+    <h1 class="inv-block" id="status"></h1>
+    <p><button type="button" class="btn" id="toggle"></button></p>
+  </section>
+
+  <section class="block">
+    <label class="check"><input type="checkbox" data-setting="visibility.hideFeed"><span class="box"></span><span data-i18n="set.hideFeed"></span></label>
+    <label class="check"><input type="checkbox" data-setting="visibility.hideSidebar"><span class="box"></span><span data-i18n="set.hideSidebar"></span></label>
+    <label class="check"><input type="checkbox" data-setting="visibility.hideRelated"><span class="box"></span><span data-i18n="set.hideRelated"></span></label>
+    <label class="check"><input type="checkbox" data-setting="visibility.hideComments"><span class="box"></span><span data-i18n="set.hideComments"></span></label>
+  </section>
+
+  <footer class="block actions">
+    <button type="button" class="btn quiet" id="all-settings" data-i18n="popup.all"></button>
+    <button type="button" class="btn quiet" id="to-hardcore" data-i18n="popup.hardcore"></button>
+  </footer>
+</body>
+</html>

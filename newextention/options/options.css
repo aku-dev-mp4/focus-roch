@@ -1,0 +1,185 @@
+/*
+ * options/options.css
+ *
+ * Full-window layout of the settings page (base styles: shared/ui.css).
+ *
+ *   ┌──────────────┬────────────┬────────────┬────────────┐
+ *   │ FOCUS ROC'H  │ COLUMN 1   │ COLUMN 2   │ COLUMN 3   │  header row
+ *   ├──────────────┼────────────┼────────────┼────────────┤
+ *   │ navigation   │ content    │ content    │ content    │
+ *   │              │            │            │            │
+ *   │ EN 中文 FR   │ ...  static ASCII texture (moai) ...  │
+ *   └──────────────┴────────────┴────────────┴────────────┘
+ *
+ * Thin rules run the full height between columns. Wide screens get all
+ * columns side by side; narrower windows stack the content columns, then
+ * the navigation goes on top.
+ */
+
+/* Bigger text than the popup (13 px): this page fills the window.
+   Still one single size for the whole page. */
+:root { --size: 22px; } /* = 15 px at 150 % zoom, the size you preferred */
+
+.app {
+  display: grid;
+  grid-template-columns: 24ch 1fr;
+  min-height: 100vh;
+}
+
+/* ---- left column: name, navigation, language --------------------------- */
+
+.side {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--fg);
+  position: relative;
+  z-index: 1;
+  background: var(--bg);
+}
+.side .head { padding: 0 1ch; border-bottom: 1px solid var(--fg); font-weight: 700; }
+.nav { display: flex; flex-direction: column; padding-top: var(--line); }
+.nav button { padding: 0 1ch; }
+.nav button[aria-selected="true"] { background: var(--fg); color: var(--bg); }
+.nav button:hover:not([aria-selected="true"]) { text-decoration: underline; }
+.side .langs { margin-top: auto; padding: var(--line) 1ch; }
+
+/* ---- content: a header row and columns --------------------------------- */
+
+.content {
+  position: relative;
+  overflow: hidden; /* clips the texture */
+}
+.screen,
+.panel {
+  position: relative;
+  z-index: 1; /* above the texture */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.cols {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.col { border-left: 1px solid var(--fg); min-width: 0; }
+.col:first-child { border-left: 0; }
+.col.wide { grid-column: span 2; }
+.col:only-child { border-right: 1px solid var(--fg); } /* focus screen: close the column */
+#hero-sub:empty { display: none; }
+.col-head {
+  padding: 0 1ch;
+  border-bottom: 1px solid var(--fg);
+  color: var(--muted);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.col-body { padding: var(--line) 2ch; }
+.col-body > * + * { margin-top: var(--line); }
+.col-body > .check + .check,
+.col-body > .check + [hidden] + .check { margin-top: 0; }
+
+/* The static ASCII moai texture: behind everything, never clickable.
+   Fix: it keeps its own fixed size (13 px, the size it was generated for)
+   instead of following the page's bigger text, otherwise the field becomes
+   wider and taller than the window and the statue falls outside. It is
+   decoration, not interface text, so the "one size" rule doesn't apply.
+   The art is wider than most windows: as a flex item pushed to the end,
+   it overflows on the LEFT, so the moai on its right side always shows. */
+.texture {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+.texture pre {
+  flex: none;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: var(--lh);
+  color: var(--texture);
+  white-space: pre;
+}
+
+/* ---- blocks used in the columns ----------------------------------------- */
+
+.bar,
+.chart,
+.kv-line { white-space: pre; font: inherit; }
+.chart { color: var(--fg); }
+
+/* délai ........ 12 h */
+.kv { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 1ch; }
+.kv dt { overflow: hidden; white-space: nowrap; color: var(--muted); }
+.kv dt::after {
+  content: " ................................................................";
+  content: " ................................................................" / "";
+}
+
+.events { list-style: none; }
+.events li + li { margin-top: var(--line); }
+.events .when { color: var(--muted); display: block; }
+
+.table { border-collapse: collapse; width: 100%; }
+.table th { text-align: left; font-weight: 400; color: var(--muted); border-bottom: 1px solid var(--fg); }
+.table th,
+.table td { padding: 0 2ch 0 0; vertical-align: top; }
+.table td:first-child { white-space: nowrap; color: var(--muted); }
+
+.actions { display: flex; flex-wrap: wrap; gap: 0 2ch; }
+
+/* Focus timer: the countdown in inverse video, same text size. */
+.timer { display: inline-block; background: var(--fg); color: var(--bg); padding: 0 1ch; font-variant-numeric: tabular-nums; }
+
+/* ---- profile picker ----------------------------------------------------- */
+
+.picker-row { display: grid; grid-template-columns: 16ch 9ch 5ch minmax(0, 1fr); }
+.picker-head { color: var(--muted); }
+.picker-head span:first-child { padding-left: 4ch; }
+.picker-row .name::before { content: "( ) "; content: "( ) " / ""; white-space: pre; }
+.picker-row input:checked ~ .name::before { content: "(•) "; content: "(•) " / ""; }
+.picker-row input:checked ~ .name { font-weight: 700; }
+.picker-row.choice:hover { background: var(--fg); color: var(--bg); }
+
+.custom > * + * { margin-top: var(--line); }
+.field { display: flex; gap: 1ch; align-items: baseline; }
+.field label { width: 14ch; color: var(--muted); }
+input[type="number"],
+input[type="time"],
+select { border-bottom: 1px solid var(--muted); padding: 0 1ch; }
+input[type="number"] { width: 6ch; }
+select option { background: var(--bg); color: var(--fg); }
+.rule-row { display: flex; flex-wrap: wrap; gap: 0 1ch; align-items: baseline; }
+.rule-row .check { display: inline-block; padding-left: 0; text-indent: 0; }
+.rule-row .check .box::before { content: "[ ]"; content: "[ ]" / ""; }
+.rule-row .check input:checked + .box::before { content: "[x]"; content: "[x]" / ""; }
+
+/* ---- narrower windows --------------------------------------------------- */
+
+/* Content columns stack; rules become horizontal between them. */
+@media (max-width: 1600px) {
+  .cols { grid-template-columns: minmax(0, 1fr); flex: none; }
+  .col { border-left: 0; border-top: 1px solid var(--fg); }
+  .col:first-child { border-top: 0; }
+  .col.wide { grid-column: auto; }
+  .screen,
+  .panel { min-height: 0; }
+  .content { min-height: 100vh; padding-bottom: calc(var(--line) * 12); }
+}
+
+/* Navigation on top, horizontal. */
+@media (max-width: 900px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .side { border-right: 0; border-bottom: 1px solid var(--fg); }
+  .nav { flex-direction: row; flex-wrap: wrap; padding-top: 0; }
+  .side .langs { margin-top: 0; padding: 0 1ch; }
+}
