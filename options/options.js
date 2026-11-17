@@ -860,7 +860,7 @@ browser.storage.onChanged.addListener((changes, area) => {
 (async () => {
   const stored = (await browser.storage.local.get(LANG_KEY))[LANG_KEY];
   await setLanguage(stored ?? defaultLanguage(), false);
-  // The static texture: plain text generated once by tools/make_ascii_moai.py.
+  // The static texture: plain text generated once from the Noto moai PNG.
   fetch(browser.runtime.getURL("options/moai.txt"))
     .then((response) => response.text())
     .then((text) => ($("texture").textContent = text))

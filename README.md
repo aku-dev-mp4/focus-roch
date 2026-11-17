@@ -19,23 +19,25 @@ YouTube on purpose.
 ## Install (development)
 
 1. Open `about:debugging#/runtime/this-firefox` in Firefox (140 or newer).
-2. *Load Temporary Add-on…* and pick `newextention/manifest.json`.
+2. *Load Temporary Add-on…* and pick `manifest.json` at the root of this repository.
 
 To build a package:
 
 ```sh
-npx web-ext build --source-dir newextention
+npx web-ext build
 ```
 
 ## Repository layout
 
 | Path | Content |
 |---|---|
-| `newextention/` | the extension itself (Manifest V3, plain HTML/CSS/JS, no dependencies) |
-| `newextention/content/` | scripts and styles injected into YouTube |
-| `newextention/options/`, `newextention/popup/` | settings page and toolbar popup |
-| `newextention/shared/` | settings, friction rules and shared styles |
-| `tools/` | one-off scripts, not shipped (e.g. the ASCII moai background generator) |
+| `manifest.json`, `background.js` | extension manifest (Manifest V3) and background "guardian" |
+| `content/` | scripts and styles injected into YouTube |
+| `options/`, `popup/` | settings page and toolbar popup |
+| `shared/` | settings, friction rules and shared styles |
+| `_locales/`, `icons/`, `fonts/` | translations shown by Firefox, icons, bundled font |
+
+Plain HTML/CSS/JS, no dependencies, no build step.
 
 ## License
 
@@ -51,4 +53,4 @@ was rewritten from scratch.
   under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Resized
   from the original.
 - Interface font: JetBrains Mono by JetBrains, licensed under the SIL Open
-  Font License 1.1 (`newextention/fonts/OFL.txt`).
+  Font License 1.1 (`fonts/OFL.txt`).

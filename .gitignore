@@ -1,8 +1,3 @@
-# The original DF YouTube extension (third-party code, kept locally only for
-# comparison; it also contains a leaked API key). Never publish it.
-df_youtube/
-df_youtube.xpi
-
 # Build output and local clutter
 *.xpi
 *.zip
